@@ -13,7 +13,7 @@ const server = http.createServer(app);
 
 /* -------------------- CORS CONFIG -------------------- */
 const allowedOrigins = [
-  "https://chatapp-alpha-nine-76.vercel.app",
+  "https://chat-app-ashen-seven-11.vercel.app/",
   "http://localhost:5173",
 ];
 

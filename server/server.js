@@ -19,19 +19,23 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow server-to-server & Postman
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    if (
+      origin === "https://chatapp-alpha-nine-76.vercel.app" ||
+      origin === "http://localhost:5173"
+    ) {
       return callback(null, true);
     }
 
-    return callback(new Error("Not allowed by CORS"));
+    // ❗ DO NOT THROW ERROR
+    return callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
+
 
 // 🔥 IMPORTANT ORDER (Node 22 compatible)
 app.use(cors(corsOptions));

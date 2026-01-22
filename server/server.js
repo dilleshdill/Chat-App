@@ -17,25 +17,25 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow server-to-server & Postman
+    if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-// IMPORTANT for preflight
-app.options("*", cors());
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+// 🔥 IMPORTANT ORDER (Node 22 compatible)
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 /* -------------------- MIDDLEWARE -------------------- */
 app.use(express.json({ limit: "4mb" }));
@@ -62,26 +62,30 @@ io.on("connection", (socket) => {
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
+    console.log("User disconnected:", userId);
     delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 
 /* -------------------- ROUTES -------------------- */
-app.get("/api/status", (req, res) => res.send("Server is live"));
+app.get("/api/status", (req, res) => {
+  res.send("Server is live");
+});
+
 app.use("/api/auth", userRoute);
 app.use("/api/messages", messageRoutes);
 
-/* -------------------- DB -------------------- */
+/* -------------------- DATABASE -------------------- */
 await connectDB();
 
-/* -------------------- SERVER -------------------- */
+/* -------------------- LOCAL SERVER -------------------- */
 if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 5000;
-  server.listen(PORT, () =>
-    console.log("Server running on PORT:", PORT)
-  );
+  server.listen(PORT, () => {
+    console.log("Server running on PORT:", PORT);
+  });
 }
 
-// Export for Vercel
+// Export server for Vercel
 export default server;
